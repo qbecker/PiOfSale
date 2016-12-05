@@ -1,0 +1,12 @@
+{
+  "name": "piofsale",
+  "version": "0.1.0",
+  "main": "main.js",
+  "description": "Open source Point of sale system",
+  "scripts": {
+  "start":"electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Quinten Becker",
+  "license": "MIT"
+}
