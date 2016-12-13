@@ -1,0 +1,263 @@
+extends layout
+block content
+  head
+    body
+      .container
+        d
+          .row
+            .col-sm-6
+              p Create New Product:
+              form#Product(name='product')
+                | Product: 
+                br
+                input#productName(type='text', placeholder='Product Name')
+                
+              button#additionalField Add Additional field
+              br
+              input#taxPercent(type='number', placeholder='Tax Percent')
+              br
+              br
+              button#Create Create Item
+              button#Remove Remove Product
+            .col-sm-6
+              | Current Products
+              br
+              ul#CurrentProductList
+
+
+                  
+
+              
+      script.
+        let button = document.getElementById("Create");
+        let removeProductButton = document.getElementById("Remove");
+        let addOnButton = document.getElementById("additionalField");
+        
+        addOnButton.addEventListener("click", (e) => {
+          var form = document.getElementById("Product");
+          var input = document.createElement("input");
+          var additionalCost = document.createElement("input");
+          var br = document.createElement("br");
+          input.type = "text";
+          input.placeholder = "Add-on";
+          form.appendChild(br);
+          form.appendChild(input);
+        });
+        
+        
+        removeProductButton.addEventListener("click", (e) => {
+          var values = document.getElementById("Product")[0];
+          var productName = values.value.split("/")[0];
+          console.log(productName);
+        });
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            setup();
+          });
+          
+          
+        function packageProduct(){
+            var values = document.getElementById("Product");
+            var taxPercent = document.getElementById("taxPercent").value;
+            var product = {};
+            var additionals = [];
+            for (var i = 0; i < values.elements.length; i++) {
+              var temp = values.elements[i].value.split("/");
+              if(i < 1){
+                product["Name"] = temp[0];
+                product["BasePrice"] = temp[1];
+              }else{
+                if(values.elements[i].value != "" ){
+                  console.log("Contains additional");
+                  var additionalTemp = {"additional": temp[0], "Price":temp[1]};
+                  additionals.push(additionalTemp);
+                }
+              }
+            }
+            product["Additionals"] = additionals;
+            product["TaxPercent"] = taxPercent;
+            alert(JSON.stringify(product));
+            var temp = JSON.stringify(product);
+            
+            addProduct(temp, function(answer){
+              alert(JSON.stringify(answer));
+              clearProductCreateForm()
+            });
+          }
+        
+        function addProduct(product, callback){
+          var request = getRequestObject();
+          request.open("POST","/products/add", true);
+          request.setRequestHeader("Content-type", "application/json"); 
+          request.onreadystatechange = function(){
+            if((request.readyState == 4) && (request.status == 200)){
+                var answer = request.responseText;
+                
+                console.log("Sent the request");
+                callback(answer);
+            }
+          }
+           request.send(product);
+        }
+        
+        function getProductList(){
+        var currentProductBox = document.getElementById("CurrentProductList");
+        currentProductBox.innerText = "";
+        console.log(currentProductBox);
+          var request = getRequestObject();
+          request.open("GET", "/products/list", true);
+          request.onreadystatechange = function(){
+            if((request.readyState == 4) && (request.status == 200)){
+                var answer = JSON.parse(request.responseText);
+                for(var i = 0; i < answer.Products.length; i++){
+                  console.log(answer.Products[i]);
+                  var br = document.createElement("br");
+                  var button = document.createElement("Button");
+                  button.innerText = answer.Products[i].Name;
+                  button.className = "btn btn-default";
+                  var name = answer.Products[i].Name;
+                  console.log(name + "hi");
+                  button.onclick = (function() {
+                    var currentI = name;
+                    return function() { 
+                        stageProduct(currentI + '');
+                    }
+                 })();
+                  CurrentProductList.appendChild(button);
+                  CurrentProductList.appendChild(br);
+                }
+            }
+          }
+           request.send(product);
+        }
+        
+        function clearProductCreateForm(){
+          var form = document.getElementById("Product");
+          var productNameBox = document.getElementById("productName");
+          var taxPercent = document.getElementById("taxPercent");
+          form.innerHTML = "";
+          var productNameBox = document.createElement("input");
+          productNameBox.placeholder = "Product Name";
+          taxPercent.value = 0;
+          form.appendChild(productNameBox);
+          setup();
+        }
+        
+        
+        function stageProduct(productName){
+          var removeProductButton = document.getElementById("Remove");
+          removeProductButton.innerText = "Remove Product";
+          var form = document.getElementById("Product");
+          var productNameBox = document.getElementById("productName");
+          var taxPercent = document.getElementById("taxPercent");
+          var createItemButton = document.getElementById("Create");
+          var request = getRequestObject();
+          request.open("GET","/products/one/" + productName, true);
+          
+          request.onreadystatechange = function(){
+            if((request.readyState == 4) && (request.status == 200)){
+                var answer = request.responseText;
+                var answer = JSON.parse(answer);
+                console.log(answer);
+                form.innerHTML = "";
+                var productNameBox = document.createElement("input");
+                productNameBox.value = answer.Name + "/" + answer.BasePrice;
+                form.appendChild(productNameBox);
+                for(var i = 0; i < answer.Additionals.length; i++){
+                  if(answer.Additionals[i] != undefined){
+                    var tempInput = document.createElement("input");
+                    tempInput.value = answer.Additionals[i].additional + "/" + answer.Additionals[i].Price;
+                    var br = document.createElement("br");
+                    form.appendChild(br);
+                    form.appendChild(tempInput);
+                  }
+                  
+                }
+                
+                taxPercent.value = answer.TaxPercent;
+                removeProductButton.style.visibility = "visible";
+                createItemButton.innerText = "Update Product";
+                createItemButton.onclick = (function() {
+                    var currentI = answer.Name;
+                    return function() { 
+                        updateProduct(currentI);
+                    }
+                 })();
+                
+            }
+          }
+           request.send(productName);
+        }
+        
+        function updateProduct(product){
+        console.log(product);
+          var values = document.getElementById("Product");
+          var taxPercent = document.getElementById("taxPercent").value;
+          var product = {};
+          var additionals = [];
+          for (var i = 0; i < values.elements.length; i++) {
+          var temp = values.elements[i].value.split("/");
+          if(i < 1){
+            product["Name"] = temp[0];
+            product["BasePrice"] = temp[1];
+          }else{
+            if(values.elements[i].value != "" ){
+                console.log("Contains additional");
+                var additionalTemp = {"additional": temp[0], "Price":temp[1]};
+                additionals.push(additionalTemp);
+              }
+            }
+          }
+          product["Additionals"] = additionals;
+          product["TaxPercent"] = taxPercent;
+          alert(JSON.stringify(product));
+          var temp = JSON.stringify(product);
+          
+          var request = getRequestObject();
+          request.open("POST","/products/update", true);
+          request.setRequestHeader("Content-type", "application/json"); 
+          request.onreadystatechange = function(){
+            if((request.readyState == 4) && (request.status == 200)){
+                var answer = request.responseText;
+                clearProductCreateForm();
+            }
+          }
+           request.send(temp);
+        }
+        
+        
+        function setup(){
+        var removeProductButton = document.getElementById("Remove");
+        var button = document.getElementById("Create");
+        removeProductButton.style.visibility = "hidden";
+        button.innerText = "Create Item";
+            button.onclick = (function() {
+                    return function() { 
+                        packageProduct();
+                    }
+                 })();
+                
+          getProductList();
+        }
+        
+        function removeProduct(product){
+          var temp = JSON.stringify(product);
+          var request = getRequestObject();
+          request.open("POST","/products/remove", true);
+          request.setRequestHeader("Content-type", "application/json"); 
+          request.onreadystatechange = function(){
+            if((request.readyState == 4) && (request.status == 200)){
+                var answer = request.responseText;
+                clearProductCreateForm();
+            }
+          }
+           request.send(temp);
+        }
+        
+        function getRequestObject() {
+          if (window.XMLHttpRequest) {
+            return(new XMLHttpRequest());
+          } else {
+            return(null);
+          }
+        }
