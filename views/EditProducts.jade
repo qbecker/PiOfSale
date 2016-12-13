@@ -138,7 +138,8 @@ block content
           form.innerHTML = "";
           var productNameBox = document.createElement("input");
           productNameBox.placeholder = "Product Name";
-          taxPercent.value = 0;
+          taxPercent.placeholder = "Tax Percent";
+          taxPercent.value = null;
           form.appendChild(productNameBox);
           setup();
         }
@@ -257,7 +258,7 @@ block content
         function getRequestObject() {
           if (window.XMLHttpRequest) {
             return(new XMLHttpRequest());
-          } else {
+            }else {
             return(null);
           }
         }
