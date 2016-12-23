@@ -20,9 +20,11 @@ block content
               button#Create Create Item
               button#Remove Remove Product
             .col-sm-6
-              | Current Products
+              | Current Products:
               br
               ul#CurrentProductList
+              
+
 
 
                   
@@ -48,7 +50,8 @@ block content
         removeProductButton.addEventListener("click", (e) => {
           var values = document.getElementById("Product")[0];
           var productName = values.value.split("/")[0];
-          console.log(productName);
+          var product = {Name: productName}
+          removeProduct(product);
         });
         
         document.addEventListener("DOMContentLoaded", function() {
@@ -68,7 +71,6 @@ block content
                 product["BasePrice"] = temp[1];
               }else{
                 if(values.elements[i].value != "" ){
-                  console.log("Contains additional");
                   var additionalTemp = {"additional": temp[0], "Price":temp[1]};
                   additionals.push(additionalTemp);
                 }
@@ -76,11 +78,9 @@ block content
             }
             product["Additionals"] = additionals;
             product["TaxPercent"] = taxPercent;
-            alert(JSON.stringify(product));
             var temp = JSON.stringify(product);
             
             addProduct(temp, function(answer){
-              alert(JSON.stringify(answer));
               clearProductCreateForm()
             });
           }
@@ -92,8 +92,6 @@ block content
           request.onreadystatechange = function(){
             if((request.readyState == 4) && (request.status == 200)){
                 var answer = request.responseText;
-                
-                console.log("Sent the request");
                 callback(answer);
             }
           }
@@ -103,20 +101,17 @@ block content
         function getProductList(){
         var currentProductBox = document.getElementById("CurrentProductList");
         currentProductBox.innerText = "";
-        console.log(currentProductBox);
           var request = getRequestObject();
           request.open("GET", "/products/list", true);
           request.onreadystatechange = function(){
             if((request.readyState == 4) && (request.status == 200)){
                 var answer = JSON.parse(request.responseText);
                 for(var i = 0; i < answer.Products.length; i++){
-                  console.log(answer.Products[i]);
                   var br = document.createElement("br");
                   var button = document.createElement("Button");
                   button.innerText = answer.Products[i].Name;
                   button.className = "btn btn-default";
                   var name = answer.Products[i].Name;
-                  console.log(name + "hi");
                   button.onclick = (function() {
                     var currentI = name;
                     return function() { 
@@ -159,7 +154,6 @@ block content
             if((request.readyState == 4) && (request.status == 200)){
                 var answer = request.responseText;
                 var answer = JSON.parse(answer);
-                console.log(answer);
                 form.innerHTML = "";
                 var productNameBox = document.createElement("input");
                 productNameBox.value = answer.Name + "/" + answer.BasePrice;
@@ -191,7 +185,6 @@ block content
         }
         
         function updateProduct(product){
-        console.log(product);
           var values = document.getElementById("Product");
           var taxPercent = document.getElementById("taxPercent").value;
           var product = {};
@@ -203,7 +196,6 @@ block content
             product["BasePrice"] = temp[1];
           }else{
             if(values.elements[i].value != "" ){
-                console.log("Contains additional");
                 var additionalTemp = {"additional": temp[0], "Price":temp[1]};
                 additionals.push(additionalTemp);
               }
@@ -211,7 +203,6 @@ block content
           }
           product["Additionals"] = additionals;
           product["TaxPercent"] = taxPercent;
-          alert(JSON.stringify(product));
           var temp = JSON.stringify(product);
           
           var request = getRequestObject();
